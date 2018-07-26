@@ -28,10 +28,14 @@ def display_image(img):
     cv.destroyAllWindows()
 
 img1_name = "IMG_0149.JPG"
-img2_name = "IMG_0150.JPG"    
+img2_name = "IMG_0150.JPG"
+img3_name = "IMG_0151.JPG"
+img4_name = "IMG_0152.JPG"    
 
 img1 = read_image(img1_name, cv.IMREAD_GRAYSCALE)
 img2 = read_image(img2_name, cv.IMREAD_GRAYSCALE)
+img3 = read_image(img3_name, cv.IMREAD_GRAYSCALE)
+img4 = read_image(img4_name, cv.IMREAD_GRAYSCALE)
 
 # max_img_shape = [max(img1.shape[0], img2.shape[0]), max(img1.shape[1], img2.shape[1])]
 # print(max_img_shape)
@@ -82,7 +86,7 @@ draw_params = dict(matchColor = (0,255,0), # draw matches in green color
                     singlePointColor = None,
                     matchesMask = matchesMask, # draw only inliers
                     flags = 2)
-img3 = cv.drawMatchesKnn(img1,kp1,img2,kp2,matches,None,**draw_params)
+img_with_matches = cv.drawMatchesKnn(img1,kp1,img2,kp2,matches,None,**draw_params)
 # plt.imshow(img3, 'gray'), plt.show()
 # print(len(matches))
 # print(matches)
@@ -125,7 +129,7 @@ if len(good) > MIN_MATCH_COUNT:
     inv_matrix_M = np.linalg.inv(M)
     print("Inverse Homography Matrix:")
     print(inv_matrix_M)
-    inv_matrix_M = np.dot(in)
+#     inv_matrix_M = np.dot(in)
     
     matchesMask = mask.ravel().tolist()
 #     h,w,d = img1.shape
@@ -133,8 +137,8 @@ if len(good) > MIN_MATCH_COUNT:
 #     dst = cv.perspectiveTransform(pts,M)
 #     img2 = cv.polylines(img2,[np.int32(dst)],True,255,3, cv.LINE_AA)
 
-    img5 = cv.warpPerspective(img1, M, (img1.shape[1] + img2.shape[1], img1.shape[0] + img2.shape[0]))
-    img5[0 : img2.shape[0], 0 : img2.shape[1]] = img2
+    stitched_img = cv.warpPerspective(img1, M, (img1.shape[1] + img2.shape[1], img1.shape[0] + img2.shape[0]))
+    stitched_img[0 : img2.shape[0], 0 : img2.shape[1]] = img2
 else:
     print( "Not enough matches are found - {}/{}".format(len(good), MIN_MATCH_COUNT) )
     matchesMask = None     
@@ -143,13 +147,13 @@ draw_params = dict(matchColor = (0,255,0), # draw matches in green color
                    singlePointColor = None,
                    matchesMask = matchesMask, # draw only inliers
                    flags = 2)
-img4 = cv.drawMatches(img1,kp1,img2,kp2,good,None,**draw_params)
+img_with_matches2 = cv.drawMatches(img1,kp1,img2,kp2,good,None,**draw_params)
 # plt.imshow(img4, 'gray'),plt.show()
 # fig, ax = plt.subplots(nrows=3)
 # ax[0].imshow(img3, "gray")
 # ax[1].imshow(img4, "gray")
 # ax[2].imshow(img5, "gray")
-plt.imshow(img5, "gray")
+plt.imshow(stitched_img, "gray")
 plt.show()
 
 
