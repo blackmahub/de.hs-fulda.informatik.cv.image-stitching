@@ -1,7 +1,6 @@
 import cv2 as cv
 import numpy as np
 from matplotlib import pyplot as plt
-from matplotlib.pyplot import flag
 
 sift = cv.xfeatures2d.SIFT_create()
 
@@ -30,13 +29,15 @@ def detect_features(img1, img2):
         if m.distance < 0.75 * n.distance:
             good_matches.append(m)
 
-    MIN_MATCH_COUNT = 100
-    if len(good_matches) > MIN_MATCH_COUNT:
-        src_pts = np.float32([ kp1[m.queryIdx].pt for m in good_matches ]).reshape(-1,1,2)
-        dst_pts = np.float32([ kp2[m.trainIdx].pt for m in good_matches ]).reshape(-1,1,2)
-        return [src_pts, dst_pts]         
+    print(len(good_matches))
+    
+#     MIN_MATCH_COUNT = 100
+#     if len(good_matches) > MIN_MATCH_COUNT:
+    src_pts = np.float32([ kp1[m.queryIdx].pt for m in good_matches ]).reshape(-1,1,2)
+    dst_pts = np.float32([ kp2[m.trainIdx].pt for m in good_matches ]).reshape(-1,1,2)
+    return [src_pts, dst_pts]         
 
-    return None
+#     return None
 
 
 def stitch_image(src_pts, dst_pts, img1, img2):
@@ -48,15 +49,11 @@ def stitch_image(src_pts, dst_pts, img1, img2):
     return stitched_img
     
 
-img1_name = "IMG_0149.JPG"
-img2_name = "IMG_0150.JPG"
-img3_name = "IMG_0151.JPG"
-img4_name = "IMG_0152.JPG"    
+img1_name = "IMG_0152.JPG"
+img2_name = "IMG_0153.JPG"   
 
 img1 = read_image(img1_name, cv.IMREAD_GRAYSCALE)
 img2 = read_image(img2_name, cv.IMREAD_GRAYSCALE)
-img3 = read_image(img3_name, cv.IMREAD_GRAYSCALE)
-img4 = read_image(img4_name, cv.IMREAD_GRAYSCALE)
 
 feature_pts = detect_features(img1, img2)
 

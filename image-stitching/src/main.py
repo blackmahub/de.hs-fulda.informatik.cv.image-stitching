@@ -1,7 +1,9 @@
 import cv2 as cv
 import numpy as np
+import sys
 from matplotlib import pyplot as plt
-from matplotlib.pyplot import flag
+
+print(__name__)
 
 def read_image(img_name, read_mode):
     img = cv.imread(img_name, read_mode)
@@ -27,15 +29,11 @@ def display_image(img):
     cv.waitKey(0)
     cv.destroyAllWindows()
 
-img1_name = "IMG_0149.JPG"
-img2_name = "IMG_0150.JPG"
-img3_name = "IMG_0151.JPG"
-img4_name = "IMG_0152.JPG"    
+img1_name = "IMG_0150.JPG"
+img2_name = "IMG_0151.JPG"   
 
 img1 = read_image(img1_name, cv.IMREAD_GRAYSCALE)
 img2 = read_image(img2_name, cv.IMREAD_GRAYSCALE)
-img3 = read_image(img3_name, cv.IMREAD_GRAYSCALE)
-img4 = read_image(img4_name, cv.IMREAD_GRAYSCALE)
 
 # max_img_shape = [max(img1.shape[0], img2.shape[0]), max(img1.shape[1], img2.shape[1])]
 # print(max_img_shape)
@@ -46,26 +44,78 @@ img4 = read_image(img4_name, cv.IMREAD_GRAYSCALE)
 # img2 = img2.reshape(max_img_shape)
 # print("Img2 shape: %s" % str(img2.shape))
 
+edges1 = cv.Canny(img1, 50, 100, apertureSize = 3)
+lines = cv.HoughLinesP(edges1,1,np.pi/180,50,minLineLength=50,maxLineGap=10)
+for line in lines:
+    x1,y1,x2,y2 = line[0]
+    cv.line(edges1, (x1,y1), (x2,y2), (255,255,255), 10)
+   
+edges2 = cv.Canny(img2, 50, 100, apertureSize = 3)
+lines = cv.HoughLinesP(edges2,1,np.pi/180,50,minLineLength=50,maxLineGap=10)
+for line in lines:
+    x1,y1,x2,y2 = line[0]
+    cv.line(edges2, (x1,y1), (x2,y2), (255,255,255), 10)    
+# fig, ax = plt.subplots(ncols=2)
+# fig.canvas.set_window_title('(50, 100) lineDetectionThreshold=50 minLineLength=50 maxLineGap=10') 
+# ax[0].imshow(edges1, "gray")
+# ax[1].imshow(edges2, "gray")
+# plt.imshow(img1, "gray")
+# plt.show()  
+
+ret1, thresh1 = cv.threshold(edges1,0,255,cv.THRESH_BINARY_INV+cv.THRESH_OTSU)  
+# noise removal
+kernel = np.ones((3,3),np.uint8)
+opening1 = cv.morphologyEx(thresh1,cv.MORPH_OPEN,kernel, iterations = 2)
+plt.imshow(opening1, "gray")
+
+
+# sure background area
+# sure_bg1 = cv.dilate(opening1,kernel,iterations=3)
+# Finding sure foreground area
+# dist_transform1 = cv.distanceTransform(opening1,cv.DIST_L2,5)
+# ret1, sure_fg1 = cv.threshold(dist_transform1,0.7*dist_transform1.max(),255,0)
+# Finding unknown region
+# sure_fg1 = np.uint8(sure_fg1)
+# unknown1 = cv.subtract(sure_bg1,sure_fg1)
+# Marker labelling
+# ret1, markers1 = cv.connectedComponents(sure_fg1)
+# Add one to all labels so that sure background is not 0, but 1
+# markers1 = markers1+1
+# Now, mark the region of unknown with zero
+# markers1[unknown1==255] = 0
+# markers1 = cv.watershed(img1,markers1)
+# img1[markers1 == -1] = [255,0,0]
+# plt.imshow(img1)
+
+# ret2, thresh2 = cv.threshold(edges2,0,255,cv.THRESH_BINARY_INV+cv.THRESH_OTSU)  
+# fig, ax = plt.subplots(ncols=2)
+# fig.canvas.set_window_title('(50, 100) lineDetectionThreshold=50 minLineLength=50 maxLineGap=10') 
+# ax[0].imshow(thresh1, "gray")
+# ax[1].imshow(thresh2, "gray")
+plt.show()  
+
+sys.exit()
+
 
 sift = cv.xfeatures2d.SIFT_create()
 
 kp1, desc1 = sift.detectAndCompute(img1, None)
 img1 = cv.drawKeypoints(img1, kp1, img1)
 
-print("Descriptor for Image 1")
-print(type(desc1))
-print(desc1.ndim)
-print(desc1.shape)
-print(desc1[0, ])
+# print("Descriptor for Image 1")
+# print(type(desc1))
+# print(desc1.ndim)
+# print(desc1.shape)
+# print(desc1[0, ])
 
 kp2, desc2 = sift.detectAndCompute(img2, None)
 img2 = cv.drawKeypoints(img2, kp2, img2)
 
-print("Descriptor for Image 2")
-print(type(desc2))
-print(desc2.ndim)
-print(desc2.shape)
-print(desc2[0, ])
+# print("Descriptor for Image 2")
+# print(type(desc2))
+# print(desc2.ndim)
+# print(desc2.shape)
+# print(desc2[0, ])
 
 # index_params = cv.flann.KDTreeIndexParams (trees=5)
 # search_params = cv.flann.SearchParams(checks=50)
@@ -78,17 +128,17 @@ flann = cv.FlannBasedMatcher(index_params, search_params)
 
 matches = flann.knnMatch(desc1, desc2, 2)
 # matches = flann.knnMatch(desc2, desc1, 2)
-matchesMask = [[0,0] for i in range(len(matches))]
-for i,(m,n) in enumerate(matches):
-    if 0.55*n.distance<m.distance < 0.80*n.distance:
-        matchesMask[i]=[1,0]
-draw_params = dict(matchColor = (0,255,0), # draw matches in green color
-                    singlePointColor = None,
-                    matchesMask = matchesMask, # draw only inliers
-                    flags = 2)
-img_with_matches = cv.drawMatchesKnn(img1,kp1,img2,kp2,matches,None,**draw_params)
-# plt.imshow(img3, 'gray'), plt.show()
-# print(len(matches))
+# matchesMask = [[0,0] for i in range(len(matches))]
+# for i,(m,n) in enumerate(matches):
+#     if 0.55*n.distance<m.distance < 0.80*n.distance:
+#         matchesMask[i]=[1,0]
+# draw_params = dict(matchColor = (0,255,0), # draw matches in green color
+#                     singlePointColor = None,
+#                     matchesMask = matchesMask, # draw only inliers
+#                     flags = 2)
+# img_with_matches = cv.drawMatchesKnn(img1,kp1,img2,kp2,matches,None,**draw_params)
+# plt.imshow(img_with_matches, 'gray'), plt.show()
+print("Matches Length: %d" % len(matches))
 # print(matches)
 # print(matches[0][0].distance)
 # print(matches[0][1].distance)
@@ -110,6 +160,7 @@ print("Good2 Matches Length: %d" % len(good2))
 # print(good2)   
 
 good = good1
+# good = good2
 MIN_MATCH_COUNT = 100
  
 if len(good) > MIN_MATCH_COUNT:
@@ -126,12 +177,27 @@ if len(good) > MIN_MATCH_COUNT:
     print("Homography Matrix:")
     print(M)
     
-    inv_matrix_M = np.linalg.inv(M)
-    print("Inverse Homography Matrix:")
-    print(inv_matrix_M)
-#     inv_matrix_M = np.dot(in)
+#     xh = np.linalg.inv(M)
+#     print("Inverse Homography Matrix:")
+#     print(xh)
+#     # start_p is denoted by f1
+#     f1 = np.dot(xh, np.array([0,0,1]))
+#     f1 = f1/f1[-1]
+#     # transforming the matrix 
+#     xh[0][-1] += abs(f1[0])
+#     xh[1][-1] += abs(f1[1])
+#     ds = np.dot(xh, np.array([img1.shape[1], img1.shape[0], 1]))
+#     offsety = abs(int(f1[1]))
+#     offsetx = abs(int(f1[0]))
+#     # dimension of warped image
+#     dsize = (int(ds[0])+offsetx, int(ds[1]) + offsety)
+#     print("image dsize =>", dsize)
+#     tmp = cv.warpPerspective(img1, xh, dsize)
+#     tmp[offsety:img2.shape[0]+offsety, offsetx:img2.shape[1]+offsetx] = img2
+#     plt.imshow(tmp, "gray")
+#     plt.show()
     
-    matchesMask = mask.ravel().tolist()
+#     matchesMask = mask.ravel().tolist()
 #     h,w,d = img1.shape
 #     pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
 #     dst = cv.perspectiveTransform(pts,M)
@@ -139,22 +205,23 @@ if len(good) > MIN_MATCH_COUNT:
 
     stitched_img = cv.warpPerspective(img1, M, (img1.shape[1] + img2.shape[1], img1.shape[0] + img2.shape[0]))
     stitched_img[0 : img2.shape[0], 0 : img2.shape[1]] = img2
+    plt.imshow(stitched_img, "gray")
+    plt.show()
 else:
     print( "Not enough matches are found - {}/{}".format(len(good), MIN_MATCH_COUNT) )
-    matchesMask = None     
+#     matchesMask = None     
 # 
-draw_params = dict(matchColor = (0,255,0), # draw matches in green color
-                   singlePointColor = None,
-                   matchesMask = matchesMask, # draw only inliers
-                   flags = 2)
-img_with_matches2 = cv.drawMatches(img1,kp1,img2,kp2,good,None,**draw_params)
+# draw_params = dict(matchColor = (0,255,0), # draw matches in green color
+#                    singlePointColor = None,
+#                    matchesMask = matchesMask, # draw only inliers
+#                    flags = 2)
+# img_with_matches2 = cv.drawMatches(img1,kp1,img2,kp2,good,None,**draw_params)
 # plt.imshow(img4, 'gray'),plt.show()
-# fig, ax = plt.subplots(nrows=3)
-# ax[0].imshow(img3, "gray")
-# ax[1].imshow(img4, "gray")
+# fig, ax = plt.subplots(nrows=2)
+# ax[0].imshow(img_with_matches, "gray")
+# ax[1].imshow(img_with_matches2, "gray")
 # ax[2].imshow(img5, "gray")
-plt.imshow(stitched_img, "gray")
-plt.show()
+# plt.show()
 
 
 
