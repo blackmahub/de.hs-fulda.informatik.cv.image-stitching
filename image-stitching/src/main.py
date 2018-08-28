@@ -32,8 +32,8 @@ def display_image(img):
 img1_name = "IMG_0150.JPG"
 img2_name = "IMG_0151.JPG"   
 
-img1 = read_image(img1_name, cv.IMREAD_GRAYSCALE)
-img2 = read_image(img2_name, cv.IMREAD_GRAYSCALE)
+# img1 = read_image(img1_name, cv.IMREAD_GRAYSCALE)
+# img2 = read_image(img2_name, cv.IMREAD_GRAYSCALE)
 
 # max_img_shape = [max(img1.shape[0], img2.shape[0]), max(img1.shape[1], img2.shape[1])]
 # print(max_img_shape)
@@ -44,63 +44,107 @@ img2 = read_image(img2_name, cv.IMREAD_GRAYSCALE)
 # img2 = img2.reshape(max_img_shape)
 # print("Img2 shape: %s" % str(img2.shape))
 
-edges1 = cv.Canny(img1, 50, 100, apertureSize = 3)
+img1 = cv.imread(img1_name)
+# plt.imshow(img1)
+gray1 = cv.cvtColor(img1,cv.COLOR_BGR2GRAY)
+edges1 = cv.Canny(gray1, 50, 100, apertureSize = 3)
 lines = cv.HoughLinesP(edges1,1,np.pi/180,50,minLineLength=50,maxLineGap=10)
 for line in lines:
     x1,y1,x2,y2 = line[0]
-    cv.line(edges1, (x1,y1), (x2,y2), (255,255,255), 10)
-   
-edges2 = cv.Canny(img2, 50, 100, apertureSize = 3)
+#     cv.line(edges1, (x1,y1), (x2,y2), (255,255,255), 10)
+#     cv.line(gray1, (x1,y1), (x2,y2), (255,255,255), 10)
+    cv.line(gray1, (x1,y1), (x2,y2), (0,0,0), 10)
+
+img2 = cv.imread(img2_name)
+# plt.imshow(img2)
+gray2 = cv.cvtColor(img2,cv.COLOR_BGR2GRAY)   
+edges2 = cv.Canny(gray2, 50, 100, apertureSize = 3)
 lines = cv.HoughLinesP(edges2,1,np.pi/180,50,minLineLength=50,maxLineGap=10)
 for line in lines:
     x1,y1,x2,y2 = line[0]
-    cv.line(edges2, (x1,y1), (x2,y2), (255,255,255), 10)    
+#     cv.line(edges2, (x1,y1), (x2,y2), (255,255,255), 10)    
+#     cv.line(gray2, (x1,y1), (x2,y2), (255,255,255), 10)
+    cv.line(gray2, (x1,y1), (x2,y2), (0,0,0), 10)
+
 # fig, ax = plt.subplots(ncols=2)
 # fig.canvas.set_window_title('(50, 100) lineDetectionThreshold=50 minLineLength=50 maxLineGap=10') 
-# ax[0].imshow(edges1, "gray")
-# ax[1].imshow(edges2, "gray")
-# plt.imshow(img1, "gray")
-# plt.show()  
+# ax[0].imshow(gray1)
+# ax[1].imshow(gray2)
+# plt.imshow(img1)
+# plt.imshow(edges1) 
 
-ret1, thresh1 = cv.threshold(edges1,0,255,cv.THRESH_BINARY_INV+cv.THRESH_OTSU)  
+# ret1, thresh1 = cv.threshold(edges1,0,255,cv.THRESH_BINARY_INV+cv.THRESH_OTSU)
+ret1, thresh1 = cv.threshold(gray1,0,255,cv.THRESH_BINARY_INV+cv.THRESH_OTSU)  
+# plt.imshow(thresh1)
 # noise removal
 kernel = np.ones((3,3),np.uint8)
 opening1 = cv.morphologyEx(thresh1,cv.MORPH_OPEN,kernel, iterations = 2)
-plt.imshow(opening1, "gray")
-
-
+# plt.imshow(opening1, "gray")
 # sure background area
-# sure_bg1 = cv.dilate(opening1,kernel,iterations=3)
+sure_bg1 = cv.dilate(opening1,kernel,iterations=3)
 # Finding sure foreground area
-# dist_transform1 = cv.distanceTransform(opening1,cv.DIST_L2,5)
-# ret1, sure_fg1 = cv.threshold(dist_transform1,0.7*dist_transform1.max(),255,0)
+dist_transform1 = cv.distanceTransform(opening1,cv.DIST_L2,5)
+ret1, sure_fg1 = cv.threshold(dist_transform1,0.7*dist_transform1.max(),255,0)
+# plt.imshow(dist_transform1)
+# plt.imshow(sure_bg1)
 # Finding unknown region
-# sure_fg1 = np.uint8(sure_fg1)
-# unknown1 = cv.subtract(sure_bg1,sure_fg1)
+sure_fg1 = np.uint8(sure_fg1)
+unknown1 = cv.subtract(sure_bg1,sure_fg1)
+# print("Unknown: ")
+# print(unknown1)
 # Marker labelling
-# ret1, markers1 = cv.connectedComponents(sure_fg1)
+ret1, markers1 = cv.connectedComponents(sure_fg1)
+# print(markers1)
+# plt.imshow(markers1)
 # Add one to all labels so that sure background is not 0, but 1
-# markers1 = markers1+1
+markers1 = markers1+1
+# print(markers1)
+# plt.imshow(markers1)
 # Now, mark the region of unknown with zero
-# markers1[unknown1==255] = 0
-# markers1 = cv.watershed(img1,markers1)
-# img1[markers1 == -1] = [255,0,0]
+markers1[unknown1==255] = 0
+# print(markers1)
+# plt.imshow(markers1)
+markers1 = cv.watershed(img1,markers1)
+# plt.imshow(markers1)
+img1[markers1 == -1] = [255,0,0]
 # plt.imshow(img1)
 
-# ret2, thresh2 = cv.threshold(edges2,0,255,cv.THRESH_BINARY_INV+cv.THRESH_OTSU)  
-# fig, ax = plt.subplots(ncols=2)
-# fig.canvas.set_window_title('(50, 100) lineDetectionThreshold=50 minLineLength=50 maxLineGap=10') 
-# ax[0].imshow(thresh1, "gray")
-# ax[1].imshow(thresh2, "gray")
-plt.show()  
+ret2, thresh2 = cv.threshold(gray2,0,255,cv.THRESH_BINARY_INV+cv.THRESH_OTSU) 
+# noise removal
+opening2 = cv.morphologyEx(thresh2,cv.MORPH_OPEN,kernel, iterations = 2)
+# sure background area
+sure_bg2 = cv.dilate(opening2,kernel,iterations=3)
+# Finding sure foreground area
+dist_transform2 = cv.distanceTransform(opening2,cv.DIST_L2,5)
+ret2, sure_fg2 = cv.threshold(dist_transform2,0.7*dist_transform2.max(),255,0)
+# Finding unknown region
+sure_fg2 = np.uint8(sure_fg2)
+unknown2 = cv.subtract(sure_bg2,sure_fg2)
+# Marker labelling
+ret2, markers2 = cv.connectedComponents(sure_fg2)
+# Add one to all labels so that sure background is not 0, but 1
+markers2 = markers2+1
+# Now, mark the region of unknown with zero
+markers2[unknown2==255] = 0
+markers2 = cv.watershed(img2,markers2)
+# plt.imshow(markers2)
+img2[markers2 == -1] = [255,0,0]
+# plt.imshow(img2)
 
+_, ax = plt.subplots(ncols=2)
+ax[0].imshow(markers1)
+ax[1].imshow(markers2)
+ 
+plt.show()  
+ 
 sys.exit()
 
+################################################################################################################################################
 
 sift = cv.xfeatures2d.SIFT_create()
 
-kp1, desc1 = sift.detectAndCompute(img1, None)
-img1 = cv.drawKeypoints(img1, kp1, img1)
+kp1, desc1 = sift.detectAndCompute(gray1, None)
+# img1 = cv.drawKeypoints(img1, kp1, img1)
 
 # print("Descriptor for Image 1")
 # print(type(desc1))
@@ -108,8 +152,8 @@ img1 = cv.drawKeypoints(img1, kp1, img1)
 # print(desc1.shape)
 # print(desc1[0, ])
 
-kp2, desc2 = sift.detectAndCompute(img2, None)
-img2 = cv.drawKeypoints(img2, kp2, img2)
+kp2, desc2 = sift.detectAndCompute(gray2, None)
+# img2 = cv.drawKeypoints(img2, kp2, img2)
 
 # print("Descriptor for Image 2")
 # print(type(desc2))
@@ -203,8 +247,8 @@ if len(good) > MIN_MATCH_COUNT:
 #     dst = cv.perspectiveTransform(pts,M)
 #     img2 = cv.polylines(img2,[np.int32(dst)],True,255,3, cv.LINE_AA)
 
-    stitched_img = cv.warpPerspective(img1, M, (img1.shape[1] + img2.shape[1], img1.shape[0] + img2.shape[0]))
-    stitched_img[0 : img2.shape[0], 0 : img2.shape[1]] = img2
+    stitched_img = cv.warpPerspective(gray1, M, (gray1.shape[1] + gray2.shape[1], gray1.shape[0] + gray2.shape[0]))
+#     stitched_img[0 : img2.shape[0], 0 : img2.shape[1]] = img2
     plt.imshow(stitched_img, "gray")
     plt.show()
 else:

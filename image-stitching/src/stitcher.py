@@ -22,12 +22,18 @@ def detect_features(img1, img2):
     search_params = dict(checks = 50)
     
     flann = cv.FlannBasedMatcher(index_params, search_params)
-    matches = flann.knnMatch(desc1, desc2, 2)
+    matches = flann.knnMatch(desc1, desc2, 4)
      
     good_matches = []
-    for m, n in matches:
+    for m, n, o, p in matches:
         if m.distance < 0.75 * n.distance:
             good_matches.append(m)
+        if o.distance < 0.75 * p.distance:
+            good_matches.append(o)
+        if m.distance < 0.75 * p.distance:
+            good_matches.append(m)
+        if o.distance < 0.75 * n.distance:
+            good_matches.append(o)            
 
     print(len(good_matches))
     
@@ -42,15 +48,16 @@ def detect_features(img1, img2):
 
 def stitch_image(src_pts, dst_pts, img1, img2):
     
-    homography_matrix, _ = cv.findHomography(src_pts, dst_pts, cv.RANSAC, 5.0)
-    stitched_img = cv.warpPerspective(img1, homography_matrix, (img1.shape[1] + img2.shape[1], img1.shape[0] + img2.shape[0]))
-    stitched_img[0 : img2.shape[0], 0 : img2.shape[1]] = img2
+    homography_matrix, _ = cv.findHomography(src_pts, dst_pts, cv.RANSAC, 6.0)
+    stitched_img = cv.warpPerspective(img1, homography_matrix, (img1.shape[1], img1.shape[0]))
+#     stitched_img = cv.warpPerspective(img1, homography_matrix, (img1.shape[1] + img2.shape[1], img1.shape[0] + img2.shape[0]))
+#     stitched_img[0 : img2.shape[0], 0 : img2.shape[1]] = img2
     
     return stitched_img
     
 
-img1_name = "IMG_0152.JPG"
-img2_name = "IMG_0153.JPG"   
+img1_name = "IMG_0150.JPG"
+img2_name = "IMG_0151.JPG"   
 
 img1 = read_image(img1_name, cv.IMREAD_GRAYSCALE)
 img2 = read_image(img2_name, cv.IMREAD_GRAYSCALE)
