@@ -35,33 +35,33 @@ def detect_features(img1, img2):
     
     #####################################################################################################################################################
     
-    good_matches_length = len(good_matches)
-    good_matches_mid_idx = int(good_matches_length / 2)
-    good_matches_last_idx = good_matches_length - 1
-    src_img_pts = np.float32([kp1[good_matches[0].queryIdx].pt, kp1[good_matches[good_matches_mid_idx].queryIdx].pt, kp1[good_matches[good_matches_last_idx].queryIdx].pt]).reshape(-1,1,2)
-    dst_img_pts = np.float32([kp2[good_matches[0].trainIdx].pt, kp2[good_matches[good_matches_mid_idx].trainIdx].pt, kp2[good_matches[good_matches_last_idx].trainIdx].pt]).reshape(-1,1,2)
-     
-    print(src_img_pts)
-    print(dst_img_pts)
+#     good_matches_length = len(good_matches)
+#     good_matches_mid_idx = int(good_matches_length / 2)
+#     good_matches_last_idx = good_matches_length - 1
+#     src_img_pts = np.float32([kp1[good_matches[0].queryIdx].pt, kp1[good_matches[good_matches_mid_idx].queryIdx].pt, kp1[good_matches[good_matches_last_idx].queryIdx].pt]).reshape(-1,1,2)
+#     dst_img_pts = np.float32([kp2[good_matches[0].trainIdx].pt, kp2[good_matches[good_matches_mid_idx].trainIdx].pt, kp2[good_matches[good_matches_last_idx].trainIdx].pt]).reshape(-1,1,2)
+#      
+#     print(src_img_pts)
+#     print(dst_img_pts)
     
 #     _, ax = plt.subplots(ncols=2)
 #     ax[0].imshow(cv.drawKeypoints(img1, kp1, img1))
 #     ax[1].imshow(cv.drawKeypoints(img2, kp2, img2))
 #     plt.imshow(cv.drawKeypoints(img1, src_img_pts, img1), "gray")  
      
-    affine_matrix = cv.getAffineTransform(src_img_pts, dst_img_pts)
-    
-    print("Affine Matrix")
-    print(affine_matrix)
-    
-    invert_affine_matrix = cv.invertAffineTransform(affine_matrix)
-    
-    print("Invert Affine Matrix")
-    print(invert_affine_matrix)
-    
-    affined_img = cv.warpAffine(img2, invert_affine_matrix, (img1.shape[1] + img2.shape[1], img1.shape[0] + img2.shape[0]))
+#     affine_matrix = cv.getAffineTransform(src_img_pts, dst_img_pts)
+#     
+#     print("Affine Matrix")
+#     print(affine_matrix)
+#     
+#     invert_affine_matrix = cv.invertAffineTransform(affine_matrix)
+#     
+#     print("Invert Affine Matrix")
+#     print(invert_affine_matrix)
+#     
+#     affined_img = cv.warpAffine(img2, invert_affine_matrix, (img1.shape[1] + img2.shape[1], img1.shape[0] + img2.shape[0]))
 #     affined_img = cv.warpAffine(img2, affine_matrix, (img1.shape[1], img1.shape[0]))
-    plt.imshow(affined_img, "gray")
+#     plt.imshow(affined_img, "gray")
 
     ##############################################################################################################################################################
 #     
@@ -81,8 +81,9 @@ def detect_features(img1, img2):
     src_pts = np.float32([ kp1[m.queryIdx].pt for m in good_matches ]).reshape(-1,1,2)
     dst_pts = np.float32([ kp2[m.trainIdx].pt for m in good_matches ]).reshape(-1,1,2)
 
-    return [src_pts, dst_pts, affined_img]         
+#     return [src_pts, dst_pts, affined_img]         
 #     return None
+    return [src_pts, dst_pts]
 
 
 def stitch_image(src_pts, dst_pts, img1, img2):
@@ -97,21 +98,21 @@ def stitch_image(src_pts, dst_pts, img1, img2):
     return stitched_img
 
 
-img1_name = "IMG_0150.JPG"
-img2_name = "IMG_0151.JPG"   
+img1_name = "IMG_0158.JPG" # "IMG_0157.JPG" # "IMG_0155.JPG" # "IMG_0154.JPG" # "IMG_0152.JPG" # "IMG_0151.JPG" # "IMG_0149.JPG"
+img2_name = "IMG_0159.JPG" # "IMG_0158.JPG" # "IMG_0156.JPG" # "IMG_0155.JPG" # "IMG_0153.JPG" # "IMG_0152.JPG" # "IMG_0150.JPG"   
 
 img1 = read_image(img1_name, cv.IMREAD_GRAYSCALE)
 img2 = read_image(img2_name, cv.IMREAD_GRAYSCALE)
 
 feature_pts = detect_features(img1, img2)
 
-plt.show()
-sys.exit()
+# plt.show()
+# sys.exit()
  
 if feature_pts == None:
     print( "Not enough matches are found")
 else:    
-    stitched_img = stitch_image(feature_pts[0], feature_pts[1], img1, feature_pts[2]) # img2
+    stitched_img = stitch_image(feature_pts[0], feature_pts[1], img1, img2) # feature_pts[2]
       
     plt.imshow(stitched_img, "gray")
     plt.show()
